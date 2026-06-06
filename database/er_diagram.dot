@@ -1,0 +1,254 @@
+// Hospital Appointment System - Entity Relationship Diagram (new architecture)
+// Render:  dot -Tpdf database/er_diagram.dot -o FinalErDiagram.pdf
+//
+// Notation:
+//   PK = primary key, FK = foreign key, UQ = unique, IDENTITY = auto-generated
+//   Crow's-foot edges: tee (|) = "one" side, crow (<) = "many" side
+//   Dashed edges = identifying 1:1 ISA / sub-type relationships
+
+digraph HospitalAppointmentSystem {
+    graph [rankdir=LR, splines=ortho, nodesep=0.5, ranksep=1.1, bgcolor="white",
+           fontname="Helvetica", label="Hospital Appointment System — Entity Relationship Diagram",
+           labelloc="t", fontsize=22];
+    node  [shape=plaintext, fontname="Helvetica", fontsize=10];
+    edge  [fontname="Helvetica", fontsize=9, color="#555555", dir=both];
+
+    // ---------- Colors ----------
+    // users  #4472C4 (blue) | places #2E8B57 (green) | clinical #C0504D (red)
+    // pharmacy #8064A2 (purple) | lookup/log #808080 (grey)
+
+    /* ============================ USER HIERARCHY ============================ */
+    sysUser [label=<
+        <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+        <TR><TD BGCOLOR="#4472C4" COLSPAN="2"><FONT COLOR="white"><B>sysUser</B></FONT></TD></TR>
+        <TR><TD ALIGN="LEFT" PORT="pk"><B>PK</B></TD><TD ALIGN="LEFT">UserID : int</TD></TR>
+        <TR><TD ALIGN="LEFT">UQ</TD><TD ALIGN="LEFT">Email : nvarchar(255)</TD></TR>
+        <TR><TD ALIGN="LEFT"></TD><TD ALIGN="LEFT">userPassword : nvarchar(255)</TD></TR>
+        <TR><TD ALIGN="LEFT"></TD><TD ALIGN="LEFT">Age : int  (CHK 0–199)</TD></TR>
+        <TR><TD ALIGN="LEFT"></TD><TD ALIGN="LEFT">Gender : char(1)  (CHK M/F/O)</TD></TR>
+        <TR><TD ALIGN="LEFT"></TD><TD ALIGN="LEFT">firstName : nvarchar(100)</TD></TR>
+        <TR><TD ALIGN="LEFT"></TD><TD ALIGN="LEFT">LastName : nvarchar(100)</TD></TR>
+        </TABLE>>];
+
+    patient [label=<
+        <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+        <TR><TD BGCOLOR="#4472C4"><FONT COLOR="white"><B>patient</B></FONT></TD></TR>
+        <TR><TD ALIGN="LEFT" PORT="pk"><B>PK,FK</B>  patientid : int</TD></TR>
+        </TABLE>>];
+
+    Doctor [label=<
+        <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+        <TR><TD BGCOLOR="#4472C4" COLSPAN="2"><FONT COLOR="white"><B>Doctor</B></FONT></TD></TR>
+        <TR><TD ALIGN="LEFT" PORT="pk"><B>PK,FK</B></TD><TD ALIGN="LEFT">DoctorID : int</TD></TR>
+        <TR><TD ALIGN="LEFT"></TD><TD ALIGN="LEFT">ISAvailable : char(1)  (CHK T/F)</TD></TR>
+        <TR><TD ALIGN="LEFT" PORT="dep"><B>FK</B></TD><TD ALIGN="LEFT">DepartmentID : int</TD></TR>
+        <TR><TD ALIGN="LEFT" PORT="hos"><B>FK</B></TD><TD ALIGN="LEFT">HospitalID : int</TD></TR>
+        </TABLE>>];
+
+    sysAdmin [label=<
+        <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+        <TR><TD BGCOLOR="#4472C4"><FONT COLOR="white"><B>sysAdmin</B></FONT></TD></TR>
+        <TR><TD ALIGN="LEFT" PORT="pk"><B>PK,FK</B>  Adminid : int</TD></TR>
+        </TABLE>>];
+
+    HospitalManager [label=<
+        <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+        <TR><TD BGCOLOR="#4472C4" COLSPAN="2"><FONT COLOR="white"><B>HospitalManager</B></FONT></TD></TR>
+        <TR><TD ALIGN="LEFT" PORT="pk"><B>PK,FK</B></TD><TD ALIGN="LEFT">ManagerID : int</TD></TR>
+        <TR><TD ALIGN="LEFT" PORT="hos"><B>FK</B></TD><TD ALIGN="LEFT">HospitalID : int</TD></TR>
+        </TABLE>>];
+
+    PharmacyManager [label=<
+        <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+        <TR><TD BGCOLOR="#4472C4" COLSPAN="2"><FONT COLOR="white"><B>PharmacyManager</B></FONT></TD></TR>
+        <TR><TD ALIGN="LEFT" PORT="pk"><B>PK,FK</B></TD><TD ALIGN="LEFT">ManagerID : int</TD></TR>
+        <TR><TD ALIGN="LEFT" PORT="ph"><B>FK</B></TD><TD ALIGN="LEFT">pharmacyID : int</TD></TR>
+        </TABLE>>];
+
+    /* ============================ PLACE HIERARCHY =========================== */
+    Place [label=<
+        <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+        <TR><TD BGCOLOR="#2E8B57" COLSPAN="2"><FONT COLOR="white"><B>Place</B></FONT></TD></TR>
+        <TR><TD ALIGN="LEFT" PORT="pk"><B>PK</B></TD><TD ALIGN="LEFT">PlaceID : int</TD></TR>
+        <TR><TD ALIGN="LEFT"></TD><TD ALIGN="LEFT">PlaceName : nvarchar(150)</TD></TR>
+        <TR><TD ALIGN="LEFT"></TD><TD ALIGN="LEFT">Email : nvarchar(255)</TD></TR>
+        <TR><TD ALIGN="LEFT"></TD><TD ALIGN="LEFT">PhoneNumber : varchar(20)</TD></TR>
+        <TR><TD ALIGN="LEFT"></TD><TD ALIGN="LEFT">StartingTime / EndingTime : time</TD></TR>
+        <TR><TD ALIGN="LEFT"></TD><TD ALIGN="LEFT">IsAvailable : char(1)  (CHK T/F)</TD></TR>
+        <TR><TD ALIGN="LEFT"></TD><TD ALIGN="LEFT">PlaceLocation : nvarchar(255)</TD></TR>
+        <TR><TD ALIGN="LEFT"></TD><TD ALIGN="LEFT">OpenDays : varchar(50)</TD></TR>
+        </TABLE>>];
+
+    Hospital [label=<
+        <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+        <TR><TD BGCOLOR="#2E8B57"><FONT COLOR="white"><B>Hospital</B></FONT></TD></TR>
+        <TR><TD ALIGN="LEFT" PORT="pk"><B>PK,FK</B>  HospitalID : int</TD></TR>
+        </TABLE>>];
+
+    Pharmacy [label=<
+        <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+        <TR><TD BGCOLOR="#2E8B57"><FONT COLOR="white"><B>Pharmacy</B></FONT></TD></TR>
+        <TR><TD ALIGN="LEFT" PORT="pk"><B>PK,FK</B>  PharmacyID : int</TD></TR>
+        </TABLE>>];
+
+    Clinic [label=<
+        <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+        <TR><TD BGCOLOR="#2E8B57" COLSPAN="2"><FONT COLOR="white"><B>Clinic</B></FONT></TD></TR>
+        <TR><TD ALIGN="LEFT" PORT="pk"><B>PK,FK</B></TD><TD ALIGN="LEFT">ClinicID : int</TD></TR>
+        <TR><TD ALIGN="LEFT" PORT="doc"><B>FK</B></TD><TD ALIGN="LEFT">DoctorID : int</TD></TR>
+        </TABLE>>];
+
+    /* ============================ LOOKUP / M:N ============================= */
+    Department [label=<
+        <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+        <TR><TD BGCOLOR="#808080" COLSPAN="2"><FONT COLOR="white"><B>Department</B></FONT></TD></TR>
+        <TR><TD ALIGN="LEFT" PORT="pk"><B>PK</B></TD><TD ALIGN="LEFT">DepartmentID : int</TD></TR>
+        <TR><TD ALIGN="LEFT">UQ</TD><TD ALIGN="LEFT">DepartmentName : nvarchar(100)</TD></TR>
+        </TABLE>>];
+
+    HospitalDepartment [label=<
+        <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+        <TR><TD BGCOLOR="#808080" COLSPAN="2"><FONT COLOR="white"><B>HospitalDepartment</B></FONT></TD></TR>
+        <TR><TD ALIGN="LEFT" PORT="hos"><B>PK,FK</B></TD><TD ALIGN="LEFT">HospitalID : int</TD></TR>
+        <TR><TD ALIGN="LEFT" PORT="dep"><B>PK,FK</B></TD><TD ALIGN="LEFT">DepartmentID : int</TD></TR>
+        </TABLE>>];
+
+    /* ============================ PHARMACY / MEDICINE ====================== */
+    Medicine [label=<
+        <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+        <TR><TD BGCOLOR="#8064A2" COLSPAN="2"><FONT COLOR="white"><B>Medicine</B></FONT></TD></TR>
+        <TR><TD ALIGN="LEFT" PORT="pk"><B>PK</B></TD><TD ALIGN="LEFT">MedicineID : int</TD></TR>
+        <TR><TD ALIGN="LEFT"></TD><TD ALIGN="LEFT">MedicineName : nvarchar(150)</TD></TR>
+        <TR><TD ALIGN="LEFT"></TD><TD ALIGN="LEFT">Active_Ingredinet : nvarchar(150)</TD></TR>
+        <TR><TD ALIGN="LEFT"></TD><TD ALIGN="LEFT">Dose : nvarchar(100)</TD></TR>
+        </TABLE>>];
+
+    StoreMedicine [label=<
+        <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+        <TR><TD BGCOLOR="#8064A2" COLSPAN="2"><FONT COLOR="white"><B>StoreMedicine</B></FONT></TD></TR>
+        <TR><TD ALIGN="LEFT" PORT="med"><B>PK,FK</B></TD><TD ALIGN="LEFT">MedicineID : int</TD></TR>
+        <TR><TD ALIGN="LEFT" PORT="ph"><B>PK,FK</B></TD><TD ALIGN="LEFT">PharmacyID : int</TD></TR>
+        <TR><TD ALIGN="LEFT"></TD><TD ALIGN="LEFT">Quantity : int  (CHK ≥ 0)</TD></TR>
+        </TABLE>>];
+
+    /* ============================ APPOINTMENTS ============================= */
+    HospitalAppointment [label=<
+        <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+        <TR><TD BGCOLOR="#C0504D" COLSPAN="2"><FONT COLOR="white"><B>HospitalAppointment</B></FONT></TD></TR>
+        <TR><TD ALIGN="LEFT" PORT="pk"><B>PK</B></TD><TD ALIGN="LEFT">HospitalAppointmentID : int</TD></TR>
+        <TR><TD ALIGN="LEFT"></TD><TD ALIGN="LEFT">DateAndTime : datetime2</TD></TR>
+        <TR><TD ALIGN="LEFT" PORT="doc"><B>FK</B></TD><TD ALIGN="LEFT">DoctorID : int</TD></TR>
+        <TR><TD ALIGN="LEFT" PORT="pat"><B>FK</B></TD><TD ALIGN="LEFT">PatientID : int</TD></TR>
+        </TABLE>>];
+
+    ClinicAppointment [label=<
+        <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+        <TR><TD BGCOLOR="#C0504D" COLSPAN="2"><FONT COLOR="white"><B>ClinicAppointment</B></FONT></TD></TR>
+        <TR><TD ALIGN="LEFT" PORT="pk"><B>PK</B></TD><TD ALIGN="LEFT">ClinicAppointmentID : int</TD></TR>
+        <TR><TD ALIGN="LEFT"></TD><TD ALIGN="LEFT">DateAndTime : datetime2</TD></TR>
+        <TR><TD ALIGN="LEFT" PORT="pat"><B>FK</B></TD><TD ALIGN="LEFT">PatientID : int</TD></TR>
+        <TR><TD ALIGN="LEFT" PORT="cli"><B>FK</B></TD><TD ALIGN="LEFT">ClinicID : int</TD></TR>
+        </TABLE>>];
+
+    /* ============================ CLINICAL RECORDS ======================== */
+    Prescription [label=<
+        <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+        <TR><TD BGCOLOR="#C0504D" COLSPAN="2"><FONT COLOR="white"><B>Prescription</B></FONT></TD></TR>
+        <TR><TD ALIGN="LEFT" PORT="pk"><B>PK</B></TD><TD ALIGN="LEFT">PrescriptionID : int</TD></TR>
+        <TR><TD ALIGN="LEFT"></TD><TD ALIGN="LEFT">DateAndTime : datetime2</TD></TR>
+        <TR><TD ALIGN="LEFT"></TD><TD ALIGN="LEFT">DiseaseName : nvarchar(150)</TD></TR>
+        <TR><TD ALIGN="LEFT" PORT="pat"><B>FK</B></TD><TD ALIGN="LEFT">PatientID : int</TD></TR>
+        <TR><TD ALIGN="LEFT"></TD><TD ALIGN="LEFT">DiseaseDescription : nvarchar(500)</TD></TR>
+        <TR><TD ALIGN="LEFT" PORT="doc"><B>FK</B></TD><TD ALIGN="LEFT">DoctorID : int</TD></TR>
+        </TABLE>>];
+
+    MedicinePrescription [label=<
+        <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+        <TR><TD BGCOLOR="#C0504D" COLSPAN="2"><FONT COLOR="white"><B>MedicinePrescription</B></FONT></TD></TR>
+        <TR><TD ALIGN="LEFT" PORT="med"><B>PK,FK</B></TD><TD ALIGN="LEFT">MedicineID : int</TD></TR>
+        <TR><TD ALIGN="LEFT" PORT="pre"><B>PK,FK</B></TD><TD ALIGN="LEFT">PrescriptionID : int</TD></TR>
+        <TR><TD ALIGN="LEFT"></TD><TD ALIGN="LEFT">Notes : nvarchar(255)</TD></TR>
+        </TABLE>>];
+
+    MedicalHistory [label=<
+        <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+        <TR><TD BGCOLOR="#C0504D" COLSPAN="2"><FONT COLOR="white"><B>MedicalHistory</B></FONT></TD></TR>
+        <TR><TD ALIGN="LEFT" PORT="pk"><B>PK</B></TD><TD ALIGN="LEFT">MedicalHistoryID : int  IDENTITY</TD></TR>
+        <TR><TD ALIGN="LEFT" PORT="pat"><B>FK</B></TD><TD ALIGN="LEFT">PatientID : int</TD></TR>
+        <TR><TD ALIGN="LEFT"></TD><TD ALIGN="LEFT">DiseaseDescription : nvarchar(500)</TD></TR>
+        <TR><TD ALIGN="LEFT"></TD><TD ALIGN="LEFT">AtYear : int</TD></TR>
+        <TR><TD ALIGN="LEFT"></TD><TD ALIGN="LEFT">IsCured : char(1)  (CHK T/F)</TD></TR>
+        </TABLE>>];
+
+    Feedback [label=<
+        <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+        <TR><TD BGCOLOR="#C0504D" COLSPAN="2"><FONT COLOR="white"><B>Feedback</B></FONT></TD></TR>
+        <TR><TD ALIGN="LEFT" PORT="pk"><B>PK</B></TD><TD ALIGN="LEFT">FeedbackID : int</TD></TR>
+        <TR><TD ALIGN="LEFT" PORT="doc"><B>FK</B></TD><TD ALIGN="LEFT">DoctorID : int</TD></TR>
+        <TR><TD ALIGN="LEFT" PORT="pat"><B>FK</B></TD><TD ALIGN="LEFT">PatientID : int</TD></TR>
+        <TR><TD ALIGN="LEFT"></TD><TD ALIGN="LEFT">theFeedback : nvarchar(1000)</TD></TR>
+        </TABLE>>];
+
+    Bill [label=<
+        <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+        <TR><TD BGCOLOR="#C0504D" COLSPAN="2"><FONT COLOR="white"><B>Bill</B></FONT></TD></TR>
+        <TR><TD ALIGN="LEFT" PORT="pk"><B>PK</B></TD><TD ALIGN="LEFT">BillID : int</TD></TR>
+        <TR><TD ALIGN="LEFT"></TD><TD ALIGN="LEFT">Price : decimal(10,2)  (CHK ≥ 0)</TD></TR>
+        <TR><TD ALIGN="LEFT"></TD><TD ALIGN="LEFT">DateandTime : datetime2</TD></TR>
+        <TR><TD ALIGN="LEFT" PORT="pla"><B>FK</B></TD><TD ALIGN="LEFT">PlaceID : int</TD></TR>
+        <TR><TD ALIGN="LEFT" PORT="pat"><B>FK</B></TD><TD ALIGN="LEFT">PatientID : int</TD></TR>
+        <TR><TD ALIGN="LEFT"></TD><TD ALIGN="LEFT">IsPaid : char(1)  (CHK T/F)</TD></TR>
+        </TABLE>>];
+
+    ActivityLogs [label=<
+        <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+        <TR><TD BGCOLOR="#808080" COLSPAN="2"><FONT COLOR="white"><B>ActivityLogs</B></FONT></TD></TR>
+        <TR><TD ALIGN="LEFT" PORT="pk"><B>PK</B></TD><TD ALIGN="LEFT">LogID : int  IDENTITY</TD></TR>
+        <TR><TD ALIGN="LEFT" PORT="usr"><B>FK</B></TD><TD ALIGN="LEFT">UserID : int</TD></TR>
+        <TR><TD ALIGN="LEFT"></TD><TD ALIGN="LEFT">DateAndTime : datetime2</TD></TR>
+        <TR><TD ALIGN="LEFT"></TD><TD ALIGN="LEFT">ActivityType : nvarchar(255)</TD></TR>
+        </TABLE>>];
+
+    /* ===================== ISA / sub-type (identifying 1:1) ================ */
+    edge [style=dashed, arrowtail=tee, arrowhead=teetee];
+    patient:pk         -> sysUser:pk;
+    Doctor:pk          -> sysUser:pk;
+    sysAdmin:pk        -> sysUser:pk;
+    HospitalManager:pk -> sysUser:pk;
+    PharmacyManager:pk -> sysUser:pk;
+    Hospital:pk        -> Place:pk;
+    Pharmacy:pk        -> Place:pk;
+    Clinic:pk          -> Place:pk;
+
+    /* ===================== Foreign keys (one : many) ======================= */
+    edge [style=solid, arrowtail=crow, arrowhead=tee];
+    // tail = child (many), head = parent (one)
+    Doctor:dep              -> Department:pk;
+    Doctor:hos              -> Hospital:pk;
+    HospitalManager:hos     -> Hospital:pk;
+    PharmacyManager:ph      -> Pharmacy:pk;
+    Clinic:doc              -> Doctor:pk;
+
+    HospitalDepartment:hos  -> Hospital:pk;
+    HospitalDepartment:dep  -> Department:pk;
+
+    StoreMedicine:med       -> Medicine:pk;
+    StoreMedicine:ph        -> Pharmacy:pk;
+
+    HospitalAppointment:doc -> Doctor:pk;
+    HospitalAppointment:pat -> patient:pk;
+    ClinicAppointment:pat   -> patient:pk;
+    ClinicAppointment:cli   -> Clinic:pk;
+
+    Prescription:pat        -> patient:pk;
+    Prescription:doc        -> Doctor:pk;
+    MedicinePrescription:med -> Medicine:pk;
+    MedicinePrescription:pre -> Prescription:pk;
+
+    MedicalHistory:pat      -> patient:pk;
+    Feedback:doc            -> Doctor:pk;
+    Feedback:pat            -> patient:pk;
+    Bill:pla                -> Place:pk;
+    Bill:pat                -> patient:pk;
+    ActivityLogs:usr        -> sysUser:pk;
+}
