@@ -205,7 +205,7 @@ namespace HospitalAppointmentProject.UML.USERS
             int res = DataBase.Manager.ExecuteNonQuery(adduser);
             if (res != 0)
             {
-                string adddoctorc = "insert into Doctor values(" + maxid + "," + 0 + "," + dep_id + "," + hospital_manager.id + ")";
+                string adddoctorc = "insert into Doctor values(" + maxid + ",'F'," + dep_id + "," + hospital_manager.id + ")";
                 int res2 = DataBase.Manager.ExecuteNonQuery(adddoctorc);
                 if (res2 != 0)
                 {

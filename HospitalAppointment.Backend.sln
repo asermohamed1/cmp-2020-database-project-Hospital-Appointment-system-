@@ -1,0 +1,36 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{5914F5E4-9651-4AAE-BA75-0A9E0574EF05}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HospitalAppointment.Data", "src\HospitalAppointment.Data\HospitalAppointment.Data.csproj", "{8661FEB2-0EFE-47B2-8E4C-049004F47E0E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{4D26634E-48D0-450A-981A-6B6BF76A2C44}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HospitalAppointment.Data.Tests", "tests\HospitalAppointment.Data.Tests\HospitalAppointment.Data.Tests.csproj", "{FEDEADFB-9838-44C2-B8CB-5FAACB54B330}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{8661FEB2-0EFE-47B2-8E4C-049004F47E0E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8661FEB2-0EFE-47B2-8E4C-049004F47E0E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8661FEB2-0EFE-47B2-8E4C-049004F47E0E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8661FEB2-0EFE-47B2-8E4C-049004F47E0E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FEDEADFB-9838-44C2-B8CB-5FAACB54B330}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FEDEADFB-9838-44C2-B8CB-5FAACB54B330}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FEDEADFB-9838-44C2-B8CB-5FAACB54B330}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FEDEADFB-9838-44C2-B8CB-5FAACB54B330}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{8661FEB2-0EFE-47B2-8E4C-049004F47E0E} = {5914F5E4-9651-4AAE-BA75-0A9E0574EF05}
+		{FEDEADFB-9838-44C2-B8CB-5FAACB54B330} = {4D26634E-48D0-450A-981A-6B6BF76A2C44}
+	EndGlobalSection
+EndGlobal

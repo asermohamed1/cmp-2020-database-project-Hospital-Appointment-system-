@@ -4,64 +4,85 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-A **C# Windows Forms desktop application** for managing hospital appointments. Patients book/edit/cancel appointments; doctors manage schedules; admins manage hospitals, pharmacies, and user accounts.
+A hospital appointment management system. It has two parts:
 
-**Tech stack:** C# / .NET Framework 4.7.2 · Windows Forms · SQL Server Express
+1. **Desktop app** (`HospitalAppointmentProject/`) — a **C# / .NET Framework 4.7.2 + Windows Forms** UI. Windows-only; builds in Visual Studio.
+2. **Backend** (`database/`, `src/`, `tests/`) — a realistic, normalized **SQL Server** schema plus a cross-platform **.NET data-access library** and a test suite. This part builds and tests on any OS with the .NET SDK.
 
-## Building & Running
+## Repository Layout
 
-Open and build using Visual Studio (2017 or later):
+| Path | What it is |
+|------|------------|
+| `HospitalAppointmentProject/` | Legacy WinForms app (Forms, UML domain models, `DataBase Manager/DBManager.cs`) |
+| `database/` | SQL Server scripts: `01_schema.sql`, `02_seed.sql`, `03_views.sql`, `04_stored_procedures.sql`, `tests/legacy_query_compat.sql` |
+| `src/HospitalAppointment.Data/` | Cross-platform (`netstandard2.0`) parameterized data-access library + repositories |
+| `tests/HospitalAppointment.Data.Tests/` | xUnit unit + integration tests (`net8.0`) |
+| `scripts/` | `db_up.sh` (Docker SQL Server), `apply_db.sh` (create+apply schema), `run_tests.sh` |
+| `HospitalAppointment.Backend.sln` | Solution for the data library + tests |
 
+## Common Commands
+
+```bash
+# Start a local SQL Server (Docker) and apply the schema + seed + procs
+scripts/db_up.sh
+scripts/apply_db.sh
+
+# Run the backend test suite (unit tests always; integration tests need a DB)
+scripts/run_tests.sh            # unit only if no DB configured
+scripts/run_tests.sh --with-db  # spins up Docker SQL Server, runs everything
+
+# Run tests directly
+dotnet test                                   # from repo root (uses the .sln)
+dotnet test --filter FullyQualifiedName~ValidationTests   # a single test class
 ```
-HospitalAppointmentProject/HospitalAppointmentProject.sln
-```
 
-There is no CLI build script, Makefile, or test suite. The application must be compiled and run from Visual Studio on Windows with SQL Server Express installed.
+Integration tests connect using the `HOSPITAL_TEST_DB_CONNECTION` environment
+variable. When it is unset (or the DB is unreachable) the integration tests
+**skip** via `[SkippableFact]` and the unit tests still run. The fixture
+(`DatabaseFixture`) drops and recreates the target database and re-applies all
+`database/*.sql` scripts before each test run, so tests start from a known state.
 
-## Database Setup
-
-The connection string is **hardcoded** in `HospitalAppointmentProject/DataBase Manager/DBManager.cs`:
-
-```
-Data Source=DESKTOP-00O8U12\SQLEXPRESS;Initial Catalog=HospitalAppointmentSystem;Integrated Security=True;
-```
-
-To run locally, change `DESKTOP-00O8U12` to your machine's hostname or `.\SQLEXPRESS`. The database name is `HospitalAppointmentSystem`. ER diagram and schema are documented in `FinalErDiagram.pdf` and `schema.pdf` at the repo root.
+The **WinForms app** (`HospitalAppointmentProject/`) is **Windows-only** and is
+built/run from Visual Studio — it cannot be compiled with the cross-platform
+`dotnet` CLI or on Linux/macOS.
 
 ## Architecture
 
-### Entry Point
-`Program.cs` → launches `welcometoappin` form (the welcome/home screen).
+### Data access — three layers, one schema
 
-### Layer Structure
+- **Legacy path:** Forms call `DataBase.Manager.Execute*` (`DBManager.cs`). `DBManager` now reads its connection string from `App.config` (`connectionStrings/"HospitalAppointmentSystem"`), opens a connection per command, and exposes **parameterized overloads** (`Execute*(sql, params SqlParameter[])`) alongside the original string-only methods kept for backward compatibility.
+- **Modern path:** `src/HospitalAppointment.Data` — `Database` (parameterized helper, `Database.P(name, value)` for parameters) + repository classes (`UserRepository`, `DoctorRepository`, `AppointmentRepository`, `PharmacyRepository`) that call the stored procedures in `database/04_stored_procedures.sql`.
+- **Stored procedures** are the injection-safe API: they take typed parameters and generate IDs atomically in a transaction (replacing the legacy `SELECT MAX(id)+1` pattern).
 
-**Forms/** — All UI (Windows Forms). Each form handles its own event logic and calls `DBManager` directly. No separate service/controller layer exists.
+### Domain model (table-per-type ISA hierarchies)
 
-**UML/** — Domain model classes organized by subdirectory:
-- `USERS/` — `sysUser` (abstract base, enum of 7 user types), then `Patient`, `Doctor`, `Manager`, `HospitalManager`, `PharmacyManager`, `sysAdmin`
-- `PLACES/` — `Place` (abstract base, enum: Hospital/Pharmacy/Clinic), then `Hospital`, `Clinic`, `Pharmacy`
-- `Appointments/` — `HospitalAppointment`, `ClinicAppointment`
-- `Paper/` — `Prescription`, `Bill`
-- `Medicine/`, `Department/`, `FeedBacks/`, `logs/`, `the Medical History/`
+- `sysUser` → `patient` / `Doctor` / `sysAdmin` / `HospitalManager` / `PharmacyManager`
+- `Place` → `Hospital` / `Pharmacy` / `Clinic`
 
-**DataBase Manager/** — Single file `DBManager.cs` wrapping all SQL Server access.
+The C# domain classes mirroring these live in `HospitalAppointmentProject/UML/`.
 
-### DBManager Pattern
+## Critical Conventions
 
-`DBManager` is used as a static instance (`DataBase.Manager`). It exposes three methods used throughout all Forms:
+- **Column order in `database/01_schema.sql` is load-bearing.** The legacy app
+  emits column-less `INSERT INTO t VALUES(...)`, so reordering a table's columns
+  breaks it. After any schema change, run `database/tests/legacy_query_compat.sql`
+  (executed automatically by `scripts/apply_db.sh`) — it runs every statement the
+  app actually issues and must pass.
+- Tables where the app supplies the id use plain `INT` primary keys. Only
+  `ActivityLogs` and `MedicalHistory` use `IDENTITY` (the app doesn't supply
+  their ids, and the column-less `INSERT` skips identity columns).
+- Boolean flags are stored as the chars `'T'`/`'F'` (`IsAvailable`, `IsPaid`,
+  `IsCured`, `ISAvailable`); gender is `'M'`/`'F'`/`'O'`. These are enforced by
+  `CHECK` constraints — use `Validation.ToFlag`/`FromFlag` in C#.
+- `Medicine.Active_Ingredinet` is intentionally misspelled to match the
+  application's queries; do not "correct" it without updating the app.
+- Designer files (`*.Designer.cs`) are auto-generated — edit the matching
+  `*.cs` form instead.
 
-- `ExecuteNonQuery(string sql)` — INSERT / UPDATE / DELETE
-- `ExecuteReader(string sql)` — SELECT returning a `DataTable`
-- `ExecuteScalar(string sql)` — SELECT returning a single value
+## Notes
 
-Queries are built via **string interpolation** (not parameterized). Be careful of SQL injection when modifying query-building code.
-
-### User Type Routing
-
-After login, the application checks the user type enum on `sysUser` and opens the corresponding form: `Patient` form, `Doctor` form, `Admin` form, etc.
-
-### Key Conventions
-
-- Designer-generated files (`*.Designer.cs`) are auto-generated by Visual Studio — edit the corresponding `*.cs` form file instead.
-- Resources (images, icons) live in `resources/` and are referenced via `Properties/Resources.resx`.
-- No async/await — all database calls are synchronous and run on the UI thread.
+- The schema/types in `database/` were reverse-engineered to exactly match the
+  table and column names the app uses (see `FinalErDiagram.pdf` / `schema.pdf`),
+  then normalized with real foreign keys, indexes, and constraints.
+- Passwords are stored as plaintext to match the legacy app's comparison logic;
+  hashing would require corresponding app changes.

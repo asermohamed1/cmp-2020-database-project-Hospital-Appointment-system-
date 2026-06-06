@@ -1,46 +1,74 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Data.SqlClient;
 using System.Data;
+using System.Configuration;
 using System.Windows.Forms;
 using HospitalAppointmentSystem;
 
 namespace DBapplication
 {
+    /// <summary>
+    /// Central database access helper.
+    ///
+    /// Improvements over the original implementation:
+    ///   * The connection string is read from App.config
+    ///     (connectionStrings/"HospitalAppointmentSystem") instead of being
+    ///     hard-coded to a specific machine. A default is used as a fallback.
+    ///   * A fresh connection is opened and disposed per command (ADO.NET
+    ///     pooling makes this cheap) rather than holding one connection open for
+    ///     the whole application lifetime.
+    ///   * New parameterized overloads (taking SqlParameter[]) let callers avoid
+    ///     string concatenation and the SQL-injection risk that comes with it.
+    ///     The original string-only methods are kept for backwards compatibility.
+    /// </summary>
     public class DBManager
     {
-
-
-        static string DB_Connection_String = @"Data Source=DESKTOP-00O8U12\SQLEXPRESS;Initial Catalog=HospitalAppointmentSystem;Integrated Security=True;";
-
-
-
-
-        SqlConnection myConnection;
+        private readonly string _connectionString;
 
         public DBManager()
         {
-            myConnection = new SqlConnection(DB_Connection_String);
-            try
-            {
-                myConnection.Open();
-                Console.WriteLine("The DB connection is opened successfully");
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("The DB connection is failed");
-                Console.WriteLine(e.ToString());
-            }
+            _connectionString = ResolveConnectionString();
         }
+
+        private static string ResolveConnectionString()
+        {
+            var setting = ConfigurationManager.ConnectionStrings["HospitalAppointmentSystem"];
+            if (setting != null && !string.IsNullOrWhiteSpace(setting.ConnectionString))
+                return setting.ConnectionString;
+
+            // Fallback so the app still runs if App.config is missing the entry.
+            return @"Data Source=.\SQLEXPRESS;Initial Catalog=HospitalAppointmentSystem;Integrated Security=True;";
+        }
+
+        /// <summary>Helper for building a parameter (maps null to DBNull).</summary>
+        public static SqlParameter Param(string name, object value)
+        {
+            if (!name.StartsWith("@")) name = "@" + name;
+            return new SqlParameter(name, value ?? DBNull.Value);
+        }
+
+        // ---- INSERT / UPDATE / DELETE ---------------------------------------
 
         public int ExecuteNonQuery(string query)
         {
+            return ExecuteNonQuery(query, null);
+        }
+
+        public int ExecuteNonQuery(string query, params SqlParameter[] parameters)
+        {
             try
             {
-                SqlCommand myCommand = new SqlCommand(query, myConnection);
-                return myCommand.ExecuteNonQuery();
+                using (var connection = new SqlConnection(_connectionString))
+                using (var command = new SqlCommand(query, connection))
+                {
+                    if (parameters != null && parameters.Length > 0)
+                        command.Parameters.AddRange(parameters);
+                    connection.Open();
+                    return command.ExecuteNonQuery();
+                }
             }
             catch (Exception ex)
             {
@@ -49,24 +77,31 @@ namespace DBapplication
             }
         }
 
+        // ---- SELECT (result set) --------------------------------------------
+
         public DataTable ExecuteReader(string query)
+        {
+            return ExecuteReader(query, null);
+        }
+
+        public DataTable ExecuteReader(string query, params SqlParameter[] parameters)
         {
             try
             {
-                SqlCommand myCommand = new SqlCommand(query, myConnection);
-                SqlDataReader reader = myCommand.ExecuteReader();
-                if (reader.HasRows)
+                using (var connection = new SqlConnection(_connectionString))
+                using (var command = new SqlCommand(query, connection))
                 {
-                    DataTable dt = new DataTable();
-                    dt.Load(reader);
-                    reader.Close();
-                    return dt;
-                }
-                else
-                {
-                    if (!reader.IsClosed)
-                        reader.Close();
-                    return null;
+                    if (parameters != null && parameters.Length > 0)
+                        command.Parameters.AddRange(parameters);
+                    connection.Open();
+                    using (var reader = command.ExecuteReader())
+                    {
+                        if (!reader.HasRows)
+                            return null; // preserved for backwards compatibility
+                        var dt = new DataTable();
+                        dt.Load(reader);
+                        return dt;
+                    }
                 }
             }
             catch (Exception ex)
@@ -77,12 +112,25 @@ namespace DBapplication
             }
         }
 
+        // ---- SELECT (scalar) ------------------------------------------------
+
         public object ExecuteScalar(string query)
+        {
+            return ExecuteScalar(query, null);
+        }
+
+        public object ExecuteScalar(string query, params SqlParameter[] parameters)
         {
             try
             {
-                SqlCommand myCommand = new SqlCommand(query, myConnection);
-                return myCommand.ExecuteScalar();
+                using (var connection = new SqlConnection(_connectionString))
+                using (var command = new SqlCommand(query, connection))
+                {
+                    if (parameters != null && parameters.Length > 0)
+                        command.Parameters.AddRange(parameters);
+                    connection.Open();
+                    return command.ExecuteScalar();
+                }
             }
             catch (Exception ex)
             {
@@ -91,19 +139,13 @@ namespace DBapplication
             }
         }
 
+        /// <summary>
+        /// Kept for backwards compatibility. Connections are now opened and
+        /// closed per command, so there is nothing to close here.
+        /// </summary>
         public void CloseConnection()
         {
-            try
-            {
-                myConnection.Close();
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
-            }
         }
-
-
     }
 
     public static class DataBase
@@ -111,4 +153,3 @@ namespace DBapplication
         public static DBManager Manager = new DBManager();
     }
 }
-;
