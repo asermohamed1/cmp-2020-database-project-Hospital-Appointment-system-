@@ -7,11 +7,12 @@
 //   Dashed edges = identifying 1:1 ISA / sub-type relationships
 
 digraph HospitalAppointmentSystem {
-    graph [rankdir=LR, splines=ortho, nodesep=0.5, ranksep=1.1, bgcolor="white",
-           fontname="Helvetica", label="Hospital Appointment System — Entity Relationship Diagram",
-           labelloc="t", fontsize=22];
+    graph [rankdir=LR, splines=polyline, nodesep=0.9, ranksep=2.6, bgcolor="white",
+           fontname="Helvetica", overlap=false, concentrate=false, pad=0.4,
+           label="Hospital Appointment System — Entity Relationship Diagram",
+           labelloc="t", fontsize=24];
     node  [shape=plaintext, fontname="Helvetica", fontsize=10];
-    edge  [fontname="Helvetica", fontsize=9, color="#555555", dir=both];
+    edge  [fontname="Helvetica", fontsize=9, dir=both, penwidth=1.5];
 
     // ---------- Colors ----------
     // users  #4472C4 (blue) | places #2E8B57 (green) | clinical #C0504D (red)
@@ -209,46 +210,76 @@ digraph HospitalAppointmentSystem {
         <TR><TD ALIGN="LEFT"></TD><TD ALIGN="LEFT">ActivityType : nvarchar(255)</TD></TR>
         </TABLE>>];
 
-    /* ===================== ISA / sub-type (identifying 1:1) ================ */
-    edge [style=dashed, arrowtail=tee, arrowhead=teetee];
-    patient:pk         -> sysUser:pk;
-    Doctor:pk          -> sysUser:pk;
-    sysAdmin:pk        -> sysUser:pk;
-    HospitalManager:pk -> sysUser:pk;
-    PharmacyManager:pk -> sysUser:pk;
-    Hospital:pk        -> Place:pk;
-    Pharmacy:pk        -> Place:pk;
-    Clinic:pk          -> Place:pk;
+    /* ===================== ISA / sub-type (UML generalization) =============
+       Read as "is-a": the open triangle points to the super-type.
+       Each colour family below traces every foreign key to one parent table,
+       so a relationship can be followed end-to-end by colour. */
+    edge [style=dashed, color="#777777", arrowtail=none, arrowhead=onormal, penwidth=1.4];
+    patient:pk         -> sysUser;
+    Doctor:pk          -> sysUser;
+    sysAdmin:pk        -> sysUser;
+    HospitalManager:pk -> sysUser;
+    PharmacyManager:pk -> sysUser;
+    Hospital:pk        -> Place;
+    Pharmacy:pk        -> Place;
+    Clinic:pk          -> Place;
 
-    /* ===================== Foreign keys (one : many) ======================= */
+    /* ===================== Foreign keys (one : many) =======================
+       Crow's foot: crow (<) = "many" at the child, tee (|) = "one" at parent.
+       The child side keeps its column port; the parent side attaches to the
+       table so the layout engine can route to the nearest edge. */
     edge [style=solid, arrowtail=crow, arrowhead=tee];
-    // tail = child (many), head = parent (one)
-    Doctor:dep              -> Department:pk;
-    Doctor:hos              -> Hospital:pk;
-    HospitalManager:hos     -> Hospital:pk;
-    PharmacyManager:ph      -> Pharmacy:pk;
-    Clinic:doc              -> Doctor:pk;
 
-    HospitalDepartment:hos  -> Hospital:pk;
-    HospitalDepartment:dep  -> Department:pk;
+    // -> sysUser  (blue)
+    edge [color="#2F5597"];
+    ActivityLogs:usr        -> sysUser;
 
-    StoreMedicine:med       -> Medicine:pk;
-    StoreMedicine:ph        -> Pharmacy:pk;
+    // -> patient  (teal)
+    edge [color="#1F9E89"];
+    HospitalAppointment:pat -> patient;
+    ClinicAppointment:pat   -> patient;
+    Prescription:pat        -> patient;
+    MedicalHistory:pat      -> patient;
+    Feedback:pat            -> patient;
+    Bill:pat                -> patient;
 
-    HospitalAppointment:doc -> Doctor:pk;
-    HospitalAppointment:pat -> patient:pk;
-    ClinicAppointment:pat   -> patient:pk;
-    ClinicAppointment:cli   -> Clinic:pk;
+    // -> Doctor  (red)
+    edge [color="#C0504D"];
+    Clinic:doc              -> Doctor;
+    HospitalAppointment:doc -> Doctor;
+    Prescription:doc        -> Doctor;
+    Feedback:doc            -> Doctor;
 
-    Prescription:pat        -> patient:pk;
-    Prescription:doc        -> Doctor:pk;
-    MedicinePrescription:med -> Medicine:pk;
-    MedicinePrescription:pre -> Prescription:pk;
+    // -> Place  (green)
+    edge [color="#2E8B57"];
+    Bill:pla                -> Place;
 
-    MedicalHistory:pat      -> patient:pk;
-    Feedback:doc            -> Doctor:pk;
-    Feedback:pat            -> patient:pk;
-    Bill:pla                -> Place:pk;
-    Bill:pat                -> patient:pk;
-    ActivityLogs:usr        -> sysUser:pk;
+    // -> Hospital  (olive)
+    edge [color="#6E8B1E"];
+    Doctor:hos              -> Hospital;
+    HospitalManager:hos     -> Hospital;
+    HospitalDepartment:hos  -> Hospital;
+
+    // -> Pharmacy  (purple)
+    edge [color="#8064A2"];
+    PharmacyManager:ph      -> Pharmacy;
+    StoreMedicine:ph        -> Pharmacy;
+
+    // -> Department  (orange)
+    edge [color="#D2691E"];
+    Doctor:dep              -> Department;
+    HospitalDepartment:dep  -> Department;
+
+    // -> Medicine  (magenta)
+    edge [color="#B5179E"];
+    StoreMedicine:med        -> Medicine;
+    MedicinePrescription:med -> Medicine;
+
+    // -> Prescription  (brown)
+    edge [color="#8C6D31"];
+    MedicinePrescription:pre -> Prescription;
+
+    // -> Clinic  (dark green)
+    edge [color="#2E6E3F"];
+    ClinicAppointment:cli   -> Clinic;
 }
