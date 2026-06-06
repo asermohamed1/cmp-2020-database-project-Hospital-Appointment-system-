@@ -7,7 +7,7 @@
 //   Dashed edges = identifying 1:1 ISA / sub-type relationships
 
 digraph HospitalAppointmentSystem {
-    graph [rankdir=LR, splines=polyline, nodesep=0.9, ranksep=2.6, bgcolor="white",
+    graph [rankdir=LR, splines=ortho, nodesep=0.9, ranksep=2.6, bgcolor="white",
            fontname="Helvetica", overlap=false, concentrate=false, pad=0.4,
            label="Hospital Appointment System — Entity Relationship Diagram",
            labelloc="t", fontsize=24];
@@ -212,74 +212,73 @@ digraph HospitalAppointmentSystem {
 
     /* ===================== ISA / sub-type (UML generalization) =============
        Read as "is-a": the open triangle points to the super-type.
-       Each colour family below traces every foreign key to one parent table,
-       so a relationship can be followed end-to-end by colour. */
+       Edges connect table-to-table so the router lands them flush on the box
+       borders (no angled stabs into individual cells); foreign keys are
+       colour-coded by parent so each can be followed end-to-end. */
     edge [style=dashed, color="#777777", arrowtail=none, arrowhead=onormal, penwidth=1.4];
-    patient:pk         -> sysUser;
-    Doctor:pk          -> sysUser;
-    sysAdmin:pk        -> sysUser;
-    HospitalManager:pk -> sysUser;
-    PharmacyManager:pk -> sysUser;
-    Hospital:pk        -> Place;
-    Pharmacy:pk        -> Place;
-    Clinic:pk          -> Place;
+    patient         -> sysUser;
+    Doctor          -> sysUser;
+    sysAdmin        -> sysUser;
+    HospitalManager -> sysUser;
+    PharmacyManager -> sysUser;
+    Hospital        -> Place;
+    Pharmacy        -> Place;
+    Clinic          -> Place;
 
     /* ===================== Foreign keys (one : many) =======================
-       Crow's foot: crow (<) = "many" at the child, tee (|) = "one" at parent.
-       The child side keeps its column port; the parent side attaches to the
-       table so the layout engine can route to the nearest edge. */
+       Crow's foot: crow (<) = "many" at the child, tee (|) = "one" at parent. */
     edge [style=solid, arrowtail=crow, arrowhead=tee];
 
     // -> sysUser  (blue)
     edge [color="#2F5597"];
-    ActivityLogs:usr        -> sysUser;
+    ActivityLogs        -> sysUser;
 
     // -> patient  (teal)
     edge [color="#1F9E89"];
-    HospitalAppointment:pat -> patient;
-    ClinicAppointment:pat   -> patient;
-    Prescription:pat        -> patient;
-    MedicalHistory:pat      -> patient;
-    Feedback:pat            -> patient;
-    Bill:pat                -> patient;
+    HospitalAppointment -> patient;
+    ClinicAppointment   -> patient;
+    Prescription        -> patient;
+    MedicalHistory      -> patient;
+    Feedback            -> patient;
+    Bill                -> patient;
 
     // -> Doctor  (red)
     edge [color="#C0504D"];
-    Clinic:doc              -> Doctor;
-    HospitalAppointment:doc -> Doctor;
-    Prescription:doc        -> Doctor;
-    Feedback:doc            -> Doctor;
+    Clinic              -> Doctor;
+    HospitalAppointment -> Doctor;
+    Prescription        -> Doctor;
+    Feedback            -> Doctor;
 
     // -> Place  (green)
     edge [color="#2E8B57"];
-    Bill:pla                -> Place;
+    Bill                -> Place;
 
     // -> Hospital  (olive)
     edge [color="#6E8B1E"];
-    Doctor:hos              -> Hospital;
-    HospitalManager:hos     -> Hospital;
-    HospitalDepartment:hos  -> Hospital;
+    Doctor              -> Hospital;
+    HospitalManager     -> Hospital;
+    HospitalDepartment  -> Hospital;
 
     // -> Pharmacy  (purple)
     edge [color="#8064A2"];
-    PharmacyManager:ph      -> Pharmacy;
-    StoreMedicine:ph        -> Pharmacy;
+    PharmacyManager     -> Pharmacy;
+    StoreMedicine       -> Pharmacy;
 
     // -> Department  (orange)
     edge [color="#D2691E"];
-    Doctor:dep              -> Department;
-    HospitalDepartment:dep  -> Department;
+    Doctor              -> Department;
+    HospitalDepartment  -> Department;
 
     // -> Medicine  (magenta)
     edge [color="#B5179E"];
-    StoreMedicine:med        -> Medicine;
-    MedicinePrescription:med -> Medicine;
+    StoreMedicine        -> Medicine;
+    MedicinePrescription -> Medicine;
 
     // -> Prescription  (brown)
     edge [color="#8C6D31"];
-    MedicinePrescription:pre -> Prescription;
+    MedicinePrescription -> Prescription;
 
     // -> Clinic  (dark green)
     edge [color="#2E6E3F"];
-    ClinicAppointment:cli   -> Clinic;
+    ClinicAppointment   -> Clinic;
 }
