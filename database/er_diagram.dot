@@ -7,12 +7,12 @@
 //   Dashed edges = identifying 1:1 ISA / sub-type relationships
 
 digraph HospitalAppointmentSystem {
-    graph [rankdir=LR, splines=ortho, nodesep=0.9, ranksep=2.6, bgcolor="white",
-           fontname="Helvetica", overlap=false, concentrate=false, pad=0.4,
-           label="Hospital Appointment System — Entity Relationship Diagram",
+    graph [rankdir=LR, splines=ortho, nodesep=1.0, ranksep=3.0, bgcolor="white",
+           fontname="Helvetica", overlap=false, concentrate=true, pad=0.4,
+           label=<<FONT POINT-SIZE="24"><B>Hospital Appointment System — Entity Relationship Diagram</B></FONT><BR/><BR/><FONT POINT-SIZE="12">Solid arrow → foreign key (points to the referenced table)&#160;&#160;·&#160;&#160;Dashed open arrow → sub-type &quot;is-a&quot; (points to the super-type)&#160;&#160;·&#160;&#160;PK = primary key, FK = foreign key, UQ = unique</FONT>>,
            labelloc="t", fontsize=24];
     node  [shape=plaintext, fontname="Helvetica", fontsize=10];
-    edge  [fontname="Helvetica", fontsize=9, dir=both, penwidth=1.5];
+    edge  [fontname="Helvetica", fontsize=9, dir=forward, penwidth=1.6, arrowsize=0.9];
 
     // ---------- Colors ----------
     // users  #4472C4 (blue) | places #2E8B57 (green) | clinical #C0504D (red)
@@ -215,7 +215,7 @@ digraph HospitalAppointmentSystem {
        Edges connect table-to-table so the router lands them flush on the box
        borders (no angled stabs into individual cells); foreign keys are
        colour-coded by parent so each can be followed end-to-end. */
-    edge [style=dashed, color="#777777", arrowtail=none, arrowhead=onormal, penwidth=1.4];
+    edge [style=dashed, color="#777777", arrowhead=onormal, penwidth=1.5];
     patient         -> sysUser;
     Doctor          -> sysUser;
     sysAdmin        -> sysUser;
@@ -226,8 +226,8 @@ digraph HospitalAppointmentSystem {
     Clinic          -> Place;
 
     /* ===================== Foreign keys (one : many) =======================
-       Crow's foot: crow (<) = "many" at the child, tee (|) = "one" at parent. */
-    edge [style=solid, arrowtail=crow, arrowhead=tee];
+       Each arrow points from the child (foreign key) to the referenced parent. */
+    edge [style=solid, arrowhead=normal];
 
     // -> sysUser  (blue)
     edge [color="#2F5597"];
